@@ -1,0 +1,33 @@
+---
+
+- name: Uwsgi and python3 plugin are installed.
+  apt:
+    name: "{{ packages }}"
+    state: present
+    update_cache: yes
+    force_apt_get: yes
+  vars:
+    packages:
+    - uwsgi
+    - uwsgi-plugin-python3
+
+- name: Uwsgi systemd multiuser unit file is copied.
+  template:
+    src: templates/uwsgi@.service
+    dest: /etc/systemd/system/uwsgi@.service
+
+- name: Uwsgi configuration is copied in apps-available.
+  template:
+    src: templates/uwsgi.ini
+    dest: /etc/uwsgi/apps-available/{{ project_name }}.ini
+
+- name: Uwsgi configuration is symlinked to apps-enabled.
+  file:
+    src: /etc/uwsgi/apps-available/{{ project_name }}.ini
+    path: /etc/uwsgi/apps-enabled/{{ project_name }}.ini
+    state: link
+
+- name: Uwsgi is reloaded.
+  service:
+    name: uwsgi@{{ project_name }}
+    state: reloaded
